@@ -1,0 +1,19 @@
+mysql:
+  host: 127.0.0.1 # 数据库连接地址
+  port: 3306 # 数据库端口
+  db: gvb_db # 数据库名
+  config: utf-8mb4 
+  user: root # 数据库用户名
+  passwd: Air4045@ # 数据库密码
+  log_level: debug # 数据库日志等级
+system:
+  host: "0.0.0.0" # 运行在哪个机器
+  port: 8080 # 程序的端口
+  env: debug # 程序运行环境：开发环境
+
+logger:
+  level: info
+  prefix: "gvb"
+  director: log
+  showline: true # 是否显示行号
+  log_in_console: true # 是否显示文件路径于终端
