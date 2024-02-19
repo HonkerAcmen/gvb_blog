@@ -17,9 +17,13 @@ func InitRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/swagger/*any", gs.WrapHandler(swaggerfile.Handler))
+
+	// 路由分组
 	apiRouterGroup := router.Group("api")
-	// PublicGroup := Router.Group("api")
 	routerGroupApp := RouterGroup{apiRouterGroup}
+
+	// 路由分层
 	routerGroupApp.SettingRouter()
+	routerGroupApp.ImagesRouter()
 	return router
 }
