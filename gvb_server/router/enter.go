@@ -4,8 +4,6 @@ import (
 	"gvb_server/global"
 
 	"github.com/gin-gonic/gin"
-	swaggerfile "github.com/swaggo/files"
-	gs "github.com/swaggo/gin-swagger"
 )
 
 type RouterGroup struct {
@@ -16,7 +14,7 @@ func InitRouter() *gin.Engine {
 	gin.SetMode(global.Config.System.Env)
 	router := gin.Default()
 
-	router.GET("/swagger/*any", gs.WrapHandler(swaggerfile.Handler))
+	// router.GET("/swagger/*any", gs.WrapHandler(swaggerfile.Handler))
 
 	// 路由分组
 	apiRouterGroup := router.Group("api")
@@ -24,6 +22,8 @@ func InitRouter() *gin.Engine {
 
 	// 路由分层
 	routerGroupApp.SettingRouter()
-	routerGroupApp.ImagesRouter()
+	routerGroupApp.DocFileRouter()
+	routerGroupApp.ImageFileRouter()
+	routerGroupApp.VideoFileRouter()
 	return router
 }

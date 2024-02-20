@@ -2,30 +2,14 @@ package filesapi
 
 import (
 	"errors"
-	"gvb_server/common/res"
 	"gvb_server/global"
-	"path"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 type FileType string
 
-const (
-	ImageFile FileType = "image"
-	VideoFile FileType = "video"
-	DocFile   FileType = "file"
-)
-
-type UploadFileInfo struct {
-	FileName string   `json:"FileName"`
-	IsUpload bool     `json:"isUpload"`
-	Msg      string   `json:"msg"`
-	Type     FileType `json:"type"`
-}
-
-func GetFileType(fileName string) FileType {
+// GetFileType: 获取文件的类型
+func (FilesAPI) GetFileType(fileName string) FileType {
 	strSplits := strings.Split(fileName, ".")
 	singerStr := strSplits[len(strSplits)-1:]
 	str := strings.Join(singerStr, "")
@@ -43,7 +27,7 @@ func GetFileType(fileName string) FileType {
 }
 
 // GetFileSize: 获取文件大小
-func GetFileSize(fileType FileType, size int64) (float64, error) {
+func (FilesAPI) GetFileSize(fileType FileType, size int64) (float64, error) {
 	sizeAfter := float64(size) / float64(1024*1024)
 	switch fileType {
 	case ImageFile:
@@ -64,7 +48,8 @@ func GetFileSize(fileType FileType, size int64) (float64, error) {
 	}
 }
 
-func FileSizeIsOk(fileSize float64, fileType FileType) (isOk bool, err error) {
+// IsFileSize: 判断文件大小是否合理
+func (FilesAPI) IsFileSize(fileSize float64, fileType FileType) (isOk bool, err error) {
 
 	switch fileType {
 	case ImageFile:
@@ -88,69 +73,69 @@ func FileSizeIsOk(fileSize float64, fileType FileType) (isOk bool, err error) {
 	return isOk, nil
 }
 
-// FilesUploadView: 上传多个文件
-func (FilesAPI) FilesUploadView(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
-		res.FailWithMessage(err.Error(), c)
-		return
-	}
-	FileList, ok := form.File["image"]
+// // FilesUploadView: 上传多个文件
+// func (FilesAPI) FilesUploadView(c *gin.Context) {
+// 	form, err := c.MultipartForm()
+// 	if err != nil {
+// 		res.FailWithMessage(err.Error(), c)
+// 		return
+// 	}
+// 	FileList, ok := form.File["image"]
 
-	if !ok {
-		if err != nil {
-			res.FailWithMessage("无效的图片", c)
-			return
-		}
-	}
-	for _, file := range FileList {
-		var FilePath string
-		fileType := GetFileType(file.Filename)
-		switch fileType {
-		case "image":
-			{
-				FilePath = path.Join("uploads/photos/" + file.Filename)
-			}
-		case "video":
-			{
-				FilePath = path.Join("uploads/videos/" + file.Filename)
-			}
-		case "file":
-			{
-				FilePath = path.Join("uploads/files/" + file.Filename)
-			}
-		default:
-			FilePath = path.Join("uploads/unknown/" + file.Filename)
-		}
+// 	if !ok {
+// 		if err != nil {
+// 			res.FailWithMessage("无效的图片", c)
+// 			return
+// 		}
+// 	}
+// 	for _, file := range FileList {
+// 		var FilePath string
+// 		fileType := GetFileType(file.Filename)
+// 		switch fileType {
+// 		case "image":
+// 			{
+// 				FilePath = path.Join("uploads/photos/" + file.Filename)
+// 			}
+// 		case "video":
+// 			{
+// 				FilePath = path.Join("uploads/videos/" + file.Filename)
+// 			}
+// 		case "file":
+// 			{
+// 				FilePath = path.Join("uploads/files/" + file.Filename)
+// 			}
+// 		default:
+// 			FilePath = path.Join("uploads/unknown/" + file.Filename)
+// 		}
 
-		var resList []UploadFileInfo
-		fileSize, err := GetFileSize(fileType, file.Size)
-		if err != nil {
-			res.FailWithMessage(err.Error(), c)
-			continue
-		}
-		isOk, err := FileSizeIsOk(fileSize, fileType)
-		if err != nil {
-			res.FailWithMessage(err.Error(), c)
-			continue
-		}
-		if !isOk {
-			res.FailWithMessage("文件太大!", c)
-			continue
-		}
+// 		var resList []UploadFileInfo
+// 		fileSize, err := GetFileSize(fileType, file.Size)
+// 		if err != nil {
+// 			res.FailWithMessage(err.Error(), c)
+// 			continue
+// 		}
+// 		isOk, err := FileSizeIsOk(fileSize, fileType)
+// 		if err != nil {
+// 			res.FailWithMessage(err.Error(), c)
+// 			continue
+// 		}
+// 		if !isOk {
+// 			res.FailWithMessage("文件太大!", c)
+// 			continue
+// 		}
 
-		err = c.SaveUploadedFile(file, FilePath)
-		if err != nil {
-			global.Log.Warn("文件上传失败: ", err.Error())
-			res.FailWithCode(res.FileUploadErr, c)
-			return
-		}
-		resList = append(resList, UploadFileInfo{
-			FileName: FilePath,
-			IsUpload: true,
-			Msg:      "上传成功",
-			Type:     fileType,
-		})
-		res.OkWithData(resList, c)
-	}
-}
+// 		err = c.SaveUploadedFile(file, FilePath)
+// 		if err != nil {
+// 			global.Log.Warn("文件上传失败: ", err.Error())
+// 			res.FailWithCode(res.FileUploadErr, c)
+// 			return
+// 		}
+// 		resList = append(resList, UploadFileInfo{
+// 			FileName: FilePath,
+// 			IsUpload: true,
+// 			Msg:      "上传成功",
+// 			Type:     fileType,
+// 		})
+// 		res.OkWithData(resList, c)
+// 	}
+// }
