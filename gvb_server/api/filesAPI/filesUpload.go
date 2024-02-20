@@ -10,54 +10,82 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	FileTypeMap = map[string]string{}
+type FileType string
+
+const (
+	ImageFile FileType = "image"
+	VideoFile FileType = "video"
+	DocFile   FileType = "file"
 )
 
 type UploadFileInfo struct {
-	FileName string `json:"FileName"`
-	IsUpload bool   `json:"isUpload"`
-	Msg      string `json:"msg"`
-	Type     string `json:"type"`
+	FileName string   `json:"FileName"`
+	IsUpload bool     `json:"isUpload"`
+	Msg      string   `json:"msg"`
+	Type     FileType `json:"type"`
 }
 
-func GetFileType(fileName string) string {
+func GetFileType(fileName string) FileType {
 	strSplits := strings.Split(fileName, ".")
 	singerStr := strSplits[len(strSplits)-1:]
 	str := strings.Join(singerStr, "")
 	switch str {
 	case "png", "jpg", "jpeg", "JPEG", "gif", "GIF", "bmp":
-		return "image"
+		return ImageFile
 	case "mp4", "MKV", "mov", "wmv":
-		return "video"
+		return VideoFile
 	case "doc", "pdf", "ppt", "xls", "xlsx", "docx", "txt":
-		return "file"
+		return DocFile
 	default:
 		global.Log.Warn("未知类型文件")
 		return ""
 	}
 }
 
-// FileSizeIsOk: 判断文件的大小是否合理，合理返回true
-func FileSizeIsOk(fileType string, size int64) (bool, error) {
+// GetFileSize: 获取文件大小
+func GetFileSize(fileType FileType, size int64) (float64, error) {
 	sizeAfter := float64(size) / float64(1024*1024)
 	switch fileType {
-	case "image":
+	case ImageFile:
 		{
-			return sizeAfter <= float64(global.Config.UploadInfo.PhotoSize), nil
+			return sizeAfter, nil
 		}
-	case "video":
+	case VideoFile:
 		{
-			return sizeAfter <= float64(global.Config.UploadInfo.VideoSize), nil
+			return sizeAfter, nil
 		}
-	case "file":
+	case DocFile:
 		{
-			return sizeAfter <= float64(global.Config.UploadInfo.FileSize), nil
+			return sizeAfter, nil
 		}
 	default:
 		global.Log.Warn("未知文件, 获取大小失败")
-		return false, errors.New("获取文件大小失败")
+		return 0, errors.New("获取文件大小失败")
 	}
+}
+
+func FileSizeIsOk(fileSize float64, fileType FileType) (isOk bool, err error) {
+
+	switch fileType {
+	case ImageFile:
+		{
+			isOk = fileSize <= float64(global.Config.UploadInfo.PhotoSize)
+		}
+	case VideoFile:
+		{
+			isOk = fileSize <= float64(global.Config.UploadInfo.VideoSize)
+		}
+	case DocFile:
+		{
+			isOk = fileSize <= float64(global.Config.UploadInfo.FileSize)
+		}
+	default:
+		global.Log.Warn("未知类型文件，无法判断大小")
+		isOk = false
+		err = errors.New("未知类型文件，无法判断大小")
+		return isOk, err
+	}
+	return isOk, nil
 }
 
 // FilesUploadView: 上传多个文件
@@ -96,24 +124,33 @@ func (FilesAPI) FilesUploadView(c *gin.Context) {
 		}
 
 		var resList []UploadFileInfo
-		if isOK, err := FileSizeIsOk(fileType, file.Size); err != nil && !isOK {
+		fileSize, err := GetFileSize(fileType, file.Size)
+		if err != nil {
 			res.FailWithMessage(err.Error(), c)
 			continue
 		}
+		isOk, err := FileSizeIsOk(fileSize, fileType)
+		if err != nil {
+			res.FailWithMessage(err.Error(), c)
+			continue
+		}
+		if !isOk {
+			res.FailWithMessage("文件太大!", c)
+			continue
+		}
 
+		err = c.SaveUploadedFile(file, FilePath)
+		if err != nil {
+			global.Log.Warn("文件上传失败: ", err.Error())
+			res.FailWithCode(res.FileUploadErr, c)
+			return
+		}
 		resList = append(resList, UploadFileInfo{
 			FileName: FilePath,
 			IsUpload: true,
 			Msg:      "上传成功",
 			Type:     fileType,
 		})
-
-		// err := c.SaveUploadedFile(file, FilePath)
-		// if err != nil {
-		// 	global.Log.Warn("文件上传失败: ", err.Error())
-		// 	res.FailWithCode(res.FileUploadErr, c)
-		// 	return
-		// }
-		res.Ok(resList, "上传成功", c)
+		res.OkWithData(resList, c)
 	}
 }

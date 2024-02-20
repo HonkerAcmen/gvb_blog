@@ -5,5 +5,5 @@ type Config struct {
 	Logger     Logger       `yaml:"logger" json:"logger"`
 	System     System       `yaml:"system" json:"system"`
 	SiteInfo   ConfigSite   `yaml:"site_info" json:"site_info"`
-	UploadInfo ConfigUpload `ymal:"upload" json:"upload"`
+	UploadInfo ConfigUpload `yaml:"upload" json:"upload"`
 }
